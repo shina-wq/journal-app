@@ -18,6 +18,30 @@ export function findByProperty<T>(list: T[], key: keyof T, value: T[keyof T]): T
   return list.find((item) => item[key] === value);
 }
 
+export type Debounced<T extends unknown[]> = ((...args: T) => void) & { flush: () => void };
+
+// Delays fn until calls stop for `ms`; flush() runs a pending call right away.
+export function debounce<T extends unknown[]>(fn: (...args: T) => void, ms: number): Debounced<T> {
+  let timer: number | undefined;
+  let pendingArgs: T | null = null;
+
+  function flush(): void {
+    clearTimeout(timer);
+    if (pendingArgs === null) return;
+    const args = pendingArgs;
+    pendingArgs = null;
+    fn(...args);
+  }
+
+  function debounced(...args: T): void {
+    pendingArgs = args;
+    clearTimeout(timer);
+    timer = window.setTimeout(flush, ms);
+  }
+
+  return Object.assign(debounced, { flush });
+}
+
 export function getEntry(id: string): JournalEntry | undefined {
   return findByProperty(entries, 'id', id);
 }
