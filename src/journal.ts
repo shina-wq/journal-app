@@ -116,6 +116,11 @@ function handleDelete(): void {
 
 elements.form.addEventListener('submit', handleSave);
 elements.moods.addEventListener('change', refreshPrompt);
+
+elements.shuffleButton.addEventListener('click', (): void => {
+  refreshPrompt();
+  elements.content.focus();
+});
 elements.deleteButton.addEventListener('click', handleDelete);
 elements.backButton.addEventListener('click', (): void => setView('list'));
 

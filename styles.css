@@ -354,6 +354,35 @@ button {
   gap: 16px;
 }
 
+.prompt-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  margin-right: auto;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.prompt-btn:hover {
+  background: var(--bg);
+  color: var(--text);
+}
+
+.prompt-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* The prompt is the placeholder, so the button only shows while the entry is empty */
+.content-input:not(:placeholder-shown) ~ .form-footer .prompt-btn {
+  visibility: hidden;
+}
+
 .status {
   margin: 0;
   color: var(--muted);

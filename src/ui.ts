@@ -21,6 +21,7 @@ export const elements = {
   moods: getElement<HTMLFieldSetElement>('#moods'),
   title: getElement<HTMLInputElement>('#title'),
   content: getElement<HTMLTextAreaElement>('#content'),
+  shuffleButton: getElement<HTMLButtonElement>('#shuffle-prompt'),
   status: getElement<HTMLParagraphElement>('#status'),
 };
 
