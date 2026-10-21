@@ -1,10 +1,8 @@
-/* Tokens: light-dark(light, dark) follows color-scheme (system by default) */
+/* Tokens: light-dark(light, dark) picks a value from color-scheme (set by data-theme) */
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
   --bg: light-dark(#e9e0d7, #1f1a16);
   --selected: light-dark(#dfcbb4, #3a2f26);
-  --accent: light-dark(#bc9a78, #8a6a4e);
-  --accent-hover: light-dark(#a98764, #9c7b5d);
   --page: light-dark(#fbf9f6, #2a231e);
   --text: light-dark(#2e2418, #efe6dc);
   --text-hover: light-dark(#4a3b2a, #d8cdc1);
@@ -17,6 +15,8 @@
   --font-sans: 'Rubik', system-ui, sans-serif;
   --radius: 12px;
 }
+
+:root[data-theme='dark'] { color-scheme: dark; }
 
 [data-mood='happy'] { --mood: #f3cf7a; }
 [data-mood='sad'] { --mood: #a9c4e2; }
@@ -36,6 +36,13 @@ body {
   background: var(--bg);
   color: var(--text);
   font: 400 1rem/1.6 var(--font-sans);
+}
+
+/* Scrolling still works (wheel, touch, keyboard); only the bar is hidden */
+html,
+.sidebar,
+.page {
+  scrollbar-width: none;
 }
 
 button,
@@ -147,16 +154,26 @@ button {
   padding: 0;
   border: 0;
   border-radius: 50%;
-  background: var(--accent);
+  background: var(--selected);
 }
 
 .icon-btn:hover {
-  background: var(--accent-hover);
+  background: color-mix(in srgb, var(--selected), var(--text) 12%);
 }
 
 .icon-btn svg {
   width: 20px;
   height: 20px;
+}
+
+.theme-icon {
+  display: none;
+}
+
+/* The icon shows the theme the button switches to */
+:root:not([data-theme='dark']) .theme-icon[data-icon='dark'],
+[data-theme='dark'] .theme-icon[data-icon='light'] {
+  display: block;
 }
 
 .icon-btn.subtle {
@@ -276,12 +293,12 @@ button {
   flex-direction: column;
   flex: 1;
   gap: 16px;
-  padding: 16px 16px 24px;
+  padding: 16px 16px 0;
 }
 
 @media (min-width: 768px) {
   .entry-form {
-    padding: 48px clamp(24px, 5vw, 56px) 32px;
+    padding: 48px clamp(24px, 5vw, 56px) 0;
   }
 }
 
@@ -363,18 +380,29 @@ button {
 
 .content-input {
   flex: 1;
-  min-height: 40vh;
+  min-height: 6lh;
   font-size: 1.0625rem;
   line-height: 1.7;
   resize: none;
   field-sizing: content;
 }
 
+/* Stays pinned to the bottom of the page so Save is always visible */
 .form-footer {
+  position: sticky;
+  bottom: 0;
   display: flex;
   align-items: center;
   justify-content: flex-end;
   gap: 16px;
+  padding: 12px 0 24px;
+  background: var(--page);
+}
+
+@media (min-width: 768px) {
+  .form-footer {
+    padding-bottom: 32px;
+  }
 }
 
 .status {

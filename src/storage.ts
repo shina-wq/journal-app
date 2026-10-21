@@ -38,7 +38,7 @@ export function saveEntries(entries: Journal): boolean {
 
 export function loadTheme(): Theme {
   const value = localStorage.getItem(THEME_KEY);
-  return isTheme(value) ? value : 'system';
+  return isTheme(value) ? value : 'light';
 }
 
 export function saveTheme(theme: Theme): void {

@@ -1,5 +1,5 @@
 import type { EntryInput } from './journal.js';
-import { isMood, Mood, type JournalEntry } from './types.js';
+import { isMood, Mood, type JournalEntry, type Theme } from './types.js';
 
 export type View = 'list' | 'page';
 
@@ -12,6 +12,7 @@ function getElement<T extends HTMLElement>(selector: string): T {
 export const elements = {
   app: getElement<HTMLDivElement>('.app'),
   newButton: getElement<HTMLButtonElement>('#new-entry'),
+  themeButton: getElement<HTMLButtonElement>('#theme-toggle'),
   filter: getElement<HTMLSelectElement>('#mood-filter'),
   list: getElement<HTMLUListElement>('#entry-list'),
   form: getElement<HTMLFormElement>('#entry-form'),
@@ -104,6 +105,11 @@ export function readForm(): EntryInput | null {
   const mood = new FormData(elements.form).get('mood');
   if (!isMood(mood)) return null;
   return { title: elements.title.value.trim(), content: elements.content.value, mood };
+}
+
+export function applyTheme(theme: Theme, next: Theme): void {
+  document.documentElement.dataset.theme = theme;
+  elements.themeButton.setAttribute('aria-label', `Switch to ${next} theme`);
 }
 
 export function setView(view: View): void {
