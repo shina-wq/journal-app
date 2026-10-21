@@ -16,8 +16,15 @@ export interface JournalEntry {
 
 export type Journal = JournalEntry[];
 
+export const themes = ['light', 'dark', 'system'] as const;
+export type Theme = (typeof themes)[number];
+
 const moods: unknown[] = Object.values(Mood);
 
 export function isMood(value: unknown): value is Mood {
   return moods.includes(value);
+}
+
+export function isTheme(value: unknown): value is Theme {
+  return (themes as readonly unknown[]).includes(value);
 }
