@@ -108,13 +108,16 @@ function errorMessage(error: unknown): string {
 // Saves the open entry once it has a title and mood; a new entry is created on its first save.
 function saveCurrent(): void {
   const input = readForm();
-  if (!input) return;
+  if (!input) {
+    showStatus('Add a title and mood to save');
+    return;
+  }
 
   try {
     const entry = selectedId ? updateEntry(selectedId, input) : addEntry(input);
     selectedId = entry?.id ?? null;
     refreshList();
-    markSaved();
+    markSaved(Date.now());
   } catch (error) {
     showStatus(errorMessage(error), true);
   }

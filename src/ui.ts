@@ -24,14 +24,16 @@ export const elements = {
   status: getElement<HTMLParagraphElement>('#status'),
 };
 
-let statusTimer: number | undefined;
-
 function escapeHtml(text: string): string {
   return text.replace(/[&<>"']/g, (char) => `&#${char.charCodeAt(0)};`);
 }
 
 function formatDate(timestamp: number): string {
   return new Date(timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function formatTime(timestamp: number): string {
+  return new Date(timestamp).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
 }
 
 function moodLabel(mood: Mood): string {
@@ -92,12 +94,14 @@ export function fillForm(entry: JournalEntry): void {
   if (moodInput) moodInput.checked = true;
   setDate(entry.timestamp);
   elements.deleteButton.hidden = false;
+  showStatus('');
 }
 
 export function resetForm(): void {
   elements.form.reset();
   setDate(Date.now());
   elements.deleteButton.hidden = true;
+  showStatus('');
 }
 
 export function readForm(): EntryInput | null {
@@ -107,9 +111,9 @@ export function readForm(): EntryInput | null {
   return { title, content: elements.content.value, mood };
 }
 
-export function markSaved(): void {
+export function markSaved(savedAt: number): void {
   elements.deleteButton.hidden = false;
-  showStatus('Saved');
+  showStatus(`Saved · ${formatTime(savedAt)}`);
 }
 
 export function setView(view: View): void {
@@ -119,8 +123,4 @@ export function setView(view: View): void {
 export function showStatus(message: string, isError = false): void {
   elements.status.textContent = message;
   elements.status.classList.toggle('is-error', isError);
-  clearTimeout(statusTimer);
-  statusTimer = window.setTimeout((): void => {
-    elements.status.textContent = '';
-  }, 3000);
 }
