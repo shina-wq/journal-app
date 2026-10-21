@@ -49,6 +49,12 @@ export function filterByMood(mood: MoodFilter): Journal {
   return mood === 'all' ? entries : entries.filter((entry) => entry.mood === mood);
 }
 
+export function searchEntries(list: Journal, query: string): Journal {
+  const term = query.trim().toLowerCase();
+  if (!term) return list;
+  return list.filter((entry) => `${entry.title}\n${entry.content}`.toLowerCase().includes(term));
+}
+
 // Event handlers
 
 let selectedId: string | null = null;
