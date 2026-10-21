@@ -114,5 +114,7 @@ export function showStatus(message: string, isError = false): void {
   elements.status.textContent = message;
   elements.status.classList.toggle('is-error', isError);
   clearTimeout(statusTimer);
-  statusTimer = window.setTimeout(() => (elements.status.textContent = ''), 3000);
+  statusTimer = window.setTimeout((): void => {
+    elements.status.textContent = '';
+  }, 3000);
 }

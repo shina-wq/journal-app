@@ -2,15 +2,16 @@ import { loadEntries, saveEntries } from './storage.js';
 import { isMood, type Journal, type JournalEntry, type Mood } from './types.js';
 import { elements, fillForm, readForm, renderEntries, renderMoodOptions, resetForm, setView, showStatus } from './ui.js';
 
-export type EntryInput = Pick<JournalEntry, 'title' | 'content' | 'mood'>;
+export type EntryInput = Omit<JournalEntry, 'id' | 'timestamp'>;
 export type MoodFilter = Mood | 'all';
 
 let entries: Journal = loadEntries();
 
-function persist(): void {
-  if (!saveEntries(entries)) {
+function persist(next: Journal): void {
+  if (!saveEntries(next)) {
     throw new Error("Couldn't save your journal. Your browser storage may be full.");
   }
+  entries = next;
 }
 
 export function findByProperty<T>(list: T[], key: keyof T, value: T[keyof T]): T | undefined {
@@ -22,15 +23,8 @@ export function getEntry(id: string): JournalEntry | undefined {
 }
 
 export function addEntry(input: EntryInput): JournalEntry {
-  const entry: JournalEntry = {
-    id: crypto.randomUUID(),
-    title: input.title,
-    content: input.content,
-    mood: input.mood,
-    timestamp: Date.now(),
-  };
-  entries = [entry, ...entries];
-  persist();
+  const entry: JournalEntry = { ...input, id: crypto.randomUUID(), timestamp: Date.now() };
+  persist([entry, ...entries]);
   return entry;
 }
 
@@ -38,17 +32,16 @@ export function updateEntry(id: string, changes: Partial<EntryInput>): JournalEn
   const entry = getEntry(id);
   if (!entry) return undefined;
 
-  Object.assign(entry, changes);
-  persist();
-  return entry;
+  const updated: JournalEntry = { ...entry, ...changes, id: entry.id, timestamp: entry.timestamp };
+  persist(entries.map((item) => (item.id === id ? updated : item)));
+  return updated;
 }
 
 export function deleteEntry(id: string): boolean {
   const remaining = entries.filter((entry) => entry.id !== id);
   if (remaining.length === entries.length) return false;
 
-  entries = remaining;
-  persist();
+  persist(remaining);
   return true;
 }
 
@@ -105,15 +98,15 @@ function handleDelete(): void {
 
 elements.form.addEventListener('submit', handleSave);
 elements.deleteButton.addEventListener('click', handleDelete);
-elements.backButton.addEventListener('click', () => setView('list'));
+elements.backButton.addEventListener('click', (): void => setView('list'));
 
-elements.newButton.addEventListener('click', () => {
+elements.newButton.addEventListener('click', (): void => {
   openEntry(null);
   setView('page');
   elements.title.focus();
 });
 
-elements.list.addEventListener('click', (event) => {
+elements.list.addEventListener('click', (event: MouseEvent): void => {
   if (!(event.target instanceof Element)) return;
   const id = event.target.closest<HTMLElement>('[data-id]')?.dataset.id;
   if (!id) return;
@@ -121,7 +114,7 @@ elements.list.addEventListener('click', (event) => {
   setView('page');
 });
 
-elements.filter.addEventListener('change', () => {
+elements.filter.addEventListener('change', (): void => {
   const value = elements.filter.value;
   moodFilter = isMood(value) ? value : 'all';
   refreshList();

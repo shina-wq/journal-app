@@ -8,6 +8,7 @@
     "lib": ["es2020", "dom", "dom.iterable"],
     "strict": true,
     "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
     "skipLibCheck": true
   },
   "include": ["src"],
