@@ -1,6 +1,18 @@
 import { loadEntries, saveEntries } from './storage.js';
 import { isMood, type Journal, type JournalEntry, type Mood } from './types.js';
-import { elements, fillForm, readForm, renderEntries, renderMoodOptions, resetForm, setView, showStatus } from './ui.js';
+import { pickPrompt } from './prompts.js';
+import {
+  elements,
+  fillForm,
+  getSelectedMood,
+  readForm,
+  renderEntries,
+  renderMoodOptions,
+  resetForm,
+  setPrompt,
+  setView,
+  showStatus,
+} from './ui.js';
 
 export type EntryInput = Omit<JournalEntry, 'id' | 'timestamp'>;
 export type MoodFilter = Mood | 'all';
@@ -58,11 +70,17 @@ function refreshList(): void {
   renderEntries(filterByMood(moodFilter), selectedId);
 }
 
+// Shows a fresh prompt for the selected mood (or a general one) as the content placeholder.
+function refreshPrompt(): void {
+  setPrompt(pickPrompt(getSelectedMood(), elements.content.placeholder));
+}
+
 function openEntry(id: string | null): void {
   const entry = id === null ? undefined : getEntry(id);
   selectedId = entry?.id ?? null;
   if (entry) fillForm(entry);
   else resetForm();
+  refreshPrompt();
   refreshList();
 }
 
@@ -97,6 +115,12 @@ function handleDelete(): void {
 }
 
 elements.form.addEventListener('submit', handleSave);
+elements.moods.addEventListener('change', refreshPrompt);
+
+elements.shuffleButton.addEventListener('click', (): void => {
+  refreshPrompt();
+  elements.content.focus();
+});
 elements.deleteButton.addEventListener('click', handleDelete);
 elements.backButton.addEventListener('click', (): void => setView('list'));
 

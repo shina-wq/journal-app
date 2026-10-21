@@ -21,6 +21,7 @@ export const elements = {
   moods: getElement<HTMLFieldSetElement>('#moods'),
   title: getElement<HTMLInputElement>('#title'),
   content: getElement<HTMLTextAreaElement>('#content'),
+  shuffleButton: getElement<HTMLButtonElement>('#shuffle-prompt'),
   status: getElement<HTMLParagraphElement>('#status'),
 };
 
@@ -104,6 +105,15 @@ export function readForm(): EntryInput | null {
   const mood = new FormData(elements.form).get('mood');
   if (!isMood(mood)) return null;
   return { title: elements.title.value.trim(), content: elements.content.value, mood };
+}
+
+export function getSelectedMood(): Mood | null {
+  const mood = new FormData(elements.form).get('mood');
+  return isMood(mood) ? mood : null;
+}
+
+export function setPrompt(prompt: string): void {
+  elements.content.placeholder = prompt;
 }
 
 export function setView(view: View): void {
