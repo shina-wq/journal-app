@@ -1,6 +1,16 @@
 import { loadEntries, saveEntries } from './storage.js';
 import { isMood, type Journal, type JournalEntry, type Mood } from './types.js';
-import { elements, fillForm, readForm, renderEntries, renderMoodOptions, resetForm, setView, showStatus } from './ui.js';
+import {
+  elements,
+  fillForm,
+  markSaved,
+  readForm,
+  renderEntries,
+  renderMoodOptions,
+  resetForm,
+  setView,
+  showStatus,
+} from './ui.js';
 
 export type EntryInput = Omit<JournalEntry, 'id' | 'timestamp'>;
 export type MoodFilter = Mood | 'all';
@@ -16,6 +26,30 @@ function persist(next: Journal): void {
 
 export function findByProperty<T>(list: T[], key: keyof T, value: T[keyof T]): T | undefined {
   return list.find((item) => item[key] === value);
+}
+
+export type Debounced<T extends unknown[]> = ((...args: T) => void) & { flush: () => void };
+
+// Delays fn until calls stop for `ms`; flush() runs a pending call right away.
+export function debounce<T extends unknown[]>(fn: (...args: T) => void, ms: number): Debounced<T> {
+  let timer: number | undefined;
+  let pendingArgs: T | null = null;
+
+  function flush(): void {
+    clearTimeout(timer);
+    if (pendingArgs === null) return;
+    const args = pendingArgs;
+    pendingArgs = null;
+    fn(...args);
+  }
+
+  function debounced(...args: T): void {
+    pendingArgs = args;
+    clearTimeout(timer);
+    timer = window.setTimeout(flush, ms);
+  }
+
+  return Object.assign(debounced, { flush });
 }
 
 export function getEntry(id: string): JournalEntry | undefined {
@@ -59,6 +93,7 @@ function refreshList(): void {
 }
 
 function openEntry(id: string | null): void {
+  autosave.flush();
   const entry = id === null ? undefined : getEntry(id);
   selectedId = entry?.id ?? null;
   if (entry) fillForm(entry);
@@ -70,18 +105,30 @@ function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : 'Something went wrong. Try again.';
 }
 
-function handleSave(event: SubmitEvent): void {
-  event.preventDefault();
+// Saves the open entry once it has a title and mood; a new entry is created on its first save.
+function saveCurrent(): void {
   const input = readForm();
-  if (!input) return;
+  if (!input) {
+    showStatus('Add a title and mood to save');
+    return;
+  }
 
   try {
     const entry = selectedId ? updateEntry(selectedId, input) : addEntry(input);
-    openEntry(entry?.id ?? null);
-    showStatus('Entry saved');
+    selectedId = entry?.id ?? null;
+    refreshList();
+    markSaved(Date.now());
   } catch (error) {
     showStatus(errorMessage(error), true);
   }
+}
+
+const autosave = debounce(saveCurrent, 800);
+
+function handleSave(event: SubmitEvent): void {
+  event.preventDefault();
+  autosave();
+  autosave.flush();
 }
 
 function handleDelete(): void {
@@ -97,8 +144,13 @@ function handleDelete(): void {
 }
 
 elements.form.addEventListener('submit', handleSave);
+elements.form.addEventListener('input', (): void => autosave());
+window.addEventListener('pagehide', (): void => autosave.flush());
 elements.deleteButton.addEventListener('click', handleDelete);
-elements.backButton.addEventListener('click', (): void => setView('list'));
+elements.backButton.addEventListener('click', (): void => {
+  autosave.flush();
+  setView('list');
+});
 
 elements.newButton.addEventListener('click', (): void => {
   openEntry(null);
