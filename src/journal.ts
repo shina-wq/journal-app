@@ -1,6 +1,16 @@
 import { loadEntries, saveEntries } from './storage.js';
 import { isMood, type Journal, type JournalEntry, type Mood } from './types.js';
-import { elements, fillForm, readForm, renderEntries, renderMoodOptions, resetForm, setView, showStatus } from './ui.js';
+import {
+  elements,
+  fillForm,
+  markSaved,
+  readForm,
+  renderEntries,
+  renderMoodOptions,
+  resetForm,
+  setView,
+  showStatus,
+} from './ui.js';
 
 export type EntryInput = Omit<JournalEntry, 'id' | 'timestamp'>;
 export type MoodFilter = Mood | 'all';
@@ -83,6 +93,7 @@ function refreshList(): void {
 }
 
 function openEntry(id: string | null): void {
+  autosave.flush();
   const entry = id === null ? undefined : getEntry(id);
   selectedId = entry?.id ?? null;
   if (entry) fillForm(entry);
@@ -94,18 +105,27 @@ function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : 'Something went wrong. Try again.';
 }
 
-function handleSave(event: SubmitEvent): void {
-  event.preventDefault();
+// Saves the open entry once it has a title and mood; a new entry is created on its first save.
+function saveCurrent(): void {
   const input = readForm();
   if (!input) return;
 
   try {
     const entry = selectedId ? updateEntry(selectedId, input) : addEntry(input);
-    openEntry(entry?.id ?? null);
-    showStatus('Entry saved');
+    selectedId = entry?.id ?? null;
+    refreshList();
+    markSaved();
   } catch (error) {
     showStatus(errorMessage(error), true);
   }
+}
+
+const autosave = debounce(saveCurrent, 800);
+
+function handleSave(event: SubmitEvent): void {
+  event.preventDefault();
+  autosave();
+  autosave.flush();
 }
 
 function handleDelete(): void {
@@ -121,8 +141,13 @@ function handleDelete(): void {
 }
 
 elements.form.addEventListener('submit', handleSave);
+elements.form.addEventListener('input', (): void => autosave());
+window.addEventListener('pagehide', (): void => autosave.flush());
 elements.deleteButton.addEventListener('click', handleDelete);
-elements.backButton.addEventListener('click', (): void => setView('list'));
+elements.backButton.addEventListener('click', (): void => {
+  autosave.flush();
+  setView('list');
+});
 
 elements.newButton.addEventListener('click', (): void => {
   openEntry(null);

@@ -101,9 +101,15 @@ export function resetForm(): void {
 }
 
 export function readForm(): EntryInput | null {
+  const title = elements.title.value.trim();
   const mood = new FormData(elements.form).get('mood');
-  if (!isMood(mood)) return null;
-  return { title: elements.title.value.trim(), content: elements.content.value, mood };
+  if (!title || !isMood(mood)) return null;
+  return { title, content: elements.content.value, mood };
+}
+
+export function markSaved(): void {
+  elements.deleteButton.hidden = false;
+  showStatus('Saved');
 }
 
 export function setView(view: View): void {
