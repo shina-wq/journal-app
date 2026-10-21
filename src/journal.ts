@@ -59,9 +59,11 @@ export function searchEntries(list: Journal, query: string): Journal {
 
 let selectedId: string | null = null;
 let moodFilter: MoodFilter = 'all';
+let searchQuery = '';
 
 function refreshList(): void {
-  renderEntries(filterByMood(moodFilter), selectedId);
+  const isFiltered = moodFilter !== 'all' || searchQuery.trim() !== '';
+  renderEntries(searchEntries(filterByMood(moodFilter), searchQuery), selectedId, isFiltered);
 }
 
 function openEntry(id: string | null): void {
@@ -123,6 +125,11 @@ elements.list.addEventListener('click', (event: MouseEvent): void => {
 elements.filter.addEventListener('change', (): void => {
   const value = elements.filter.value;
   moodFilter = isMood(value) ? value : 'all';
+  refreshList();
+});
+
+elements.search.addEventListener('input', (): void => {
+  searchQuery = elements.search.value;
   refreshList();
 });
 
