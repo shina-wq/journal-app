@@ -1,7 +1,6 @@
-import { Mood, type Journal, type JournalEntry } from './types.js';
+import { isMood, type Journal, type JournalEntry } from './types.js';
 
 const STORAGE_KEY = 'journal.entries';
-const moods: unknown[] = Object.values(Mood);
 
 export function isJournalEntry(value: unknown): value is JournalEntry {
   if (typeof value !== 'object' || value === null) return false;
@@ -11,7 +10,7 @@ export function isJournalEntry(value: unknown): value is JournalEntry {
     typeof entry.title === 'string' &&
     typeof entry.content === 'string' &&
     typeof entry.timestamp === 'number' &&
-    moods.includes(entry.mood)
+    isMood(entry.mood)
   );
 }
 

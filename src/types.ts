@@ -15,3 +15,9 @@ export interface JournalEntry {
 }
 
 export type Journal = JournalEntry[];
+
+const moods: unknown[] = Object.values(Mood);
+
+export function isMood(value: unknown): value is Mood {
+  return moods.includes(value);
+}
