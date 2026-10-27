@@ -4,7 +4,7 @@ import {
   applyTheme,
   elements,
   fillForm,
-  markRead,
+  markSaved,
   readForm,
   renderEntries,
   renderMoodOptions,
