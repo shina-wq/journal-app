@@ -40,8 +40,7 @@ Then open the URL it prints. VS Code's Live Server extension works too.
 index.html        Entry point, loads dist/journal.js
 styles.css        Styles and responsive layout
 src/
-  journal.ts      Entry point: page state, autosave and event handlers
-  entries.ts      Business logic: add, edit, delete, search and filter entries
+  journal.ts      Core logic: add, edit, delete, search and filter entries, plus event handlers
   types.ts        Mood enum, JournalEntry interface, Journal and EntryInput types
   storage.ts      Type-safe save/load with localStorage
   ui.ts           Typed DOM rendering and form handling
@@ -53,7 +52,20 @@ src/
 - **Strict compiler**: `tsconfig.json` enables `strict`, plus `noUncheckedIndexedAccess` and `exactOptionalPropertyTypes`, targeting `es2020`.
 - **Interface and enum**: every entry matches the `JournalEntry` interface, and `mood` must be a `Mood` enum value.
 - **Generics**: `findByProperty<T>(list, key, value)` finds an item in any array of objects by any of its keys.
-- **Safe storage**: data read from `localStorage` is `unknown` until a type guard (`isJournalEntry`) proves it is a valid entry. Missing or malformed data falls back to an empty journal.
+- **Safe storage**: data read from `localStorage` is `unknown` until a type guard (`isJournalEntry`) proves it is a valid entry. A plain `as JournalEntry[]` assertion would only tell the compiler to trust the data; the guard checks every field at runtime, so edited or corrupted storage can't crash the app. A `null` from `getItem` (nothing saved yet) and malformed JSON both fall back to an empty journal.
 - **Typed mutations**: `addEntry` takes an `EntryInput` (an entry without `id` and `timestamp`) and builds a complete `JournalEntry`, so the compiler rejects an entry with missing or wrong fields.
 - **Typed DOM**: elements are looked up with a generic `getElement<T>()` helper, so each one has its exact type (`HTMLInputElement`, `HTMLTextAreaElement`, `HTMLFieldSetElement`, ...).
 - **Exhaustive prompts**: prompts are stored in a `Record<Mood, string[]>`, so adding a new mood is a compile error until it has prompts.
+
+## Where the compiler prevented runtime errors
+
+Each of these mistakes would have run in plain JavaScript and failed in the browser. `npx tsc` rejects them before the code ever runs:
+
+| Mistake | Compiler error | What would have happened at runtime |
+|---|---|---|
+| `entries[0].id` to open the latest entry | `TS2532: Object is possibly 'undefined'.` | With an empty journal, `TypeError: Cannot read properties of undefined`. Fixed with `entries[0]?.id ?? null` (caught thanks to `noUncheckedIndexedAccess`). |
+| `const raw: string = localStorage.getItem(...)` | `TS2322: Type 'string \| null' is not assignable to type 'string'.` | On a first visit `getItem` returns `null`, and parsing it as entries would break. `loadEntries` checks for `null` first. |
+| `const input: HTMLInputElement = document.querySelector('#search')` | `TS2322: Type 'HTMLInputElement \| null' is not assignable to type 'HTMLInputElement'.` | A renamed or missing element would crash on first use. `getElement<T>()` throws a clear `Missing element: #search` instead. |
+| `mood: 'happy'` in a `JournalEntry` | `TS2322: Type '"happy"' is not assignable to type 'Mood'.` | Typos like `'hapy'` would be saved and break the mood filter. Moods must come from the `Mood` enum. |
+| Creating an entry without `timestamp` | `TS2741: Property 'timestamp' is missing ... but required in type 'JournalEntry'.` | The entry would sort and group as `NaN` / "Invalid Date". `addEntry` always adds `id` and `timestamp`. |
+| `entries.at(-1)` to get the last group | `TS2550: Property 'at' does not exist on type 'Journal'. ... Try changing the 'lib' compiler option to 'es2022' or later.` | `Array.prototype.at` is newer than the `es2020` target, so older browsers would throw `is not a function`. Replaced with `list[list.length - 1]`. |
