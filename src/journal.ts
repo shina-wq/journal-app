@@ -59,6 +59,12 @@ export function filterByMood(mood: MoodFilter): Journal {
   return mood === 'all' ? entries : entries.filter((entry) => entry.mood === mood);
 }
 
+export function searchEntries(list: Journal, query: string): Journal {
+  const term = query.trim().toLowerCase();
+  if (!term) return list;
+  return list.filter((entry) => `${entry.title}\n${entry.content}`.toLowerCase().includes(term));
+}
+
 export function otherTheme(theme: Theme): Theme {
   return theme === 'dark' ? 'light' : 'dark';
 }
@@ -67,10 +73,12 @@ export function otherTheme(theme: Theme): Theme {
 
 let selectedId: string | null = null;
 let moodFilter: MoodFilter = 'all';
+let searchQuery = '';
 let theme: Theme = loadTheme();
 
 function refreshList(): void {
-  renderEntries(filterByMood(moodFilter), selectedId);
+  const isFiltered = moodFilter !== 'all' || searchQuery.trim() !== '';
+  renderEntries(searchEntries(filterByMood(moodFilter), searchQuery), selectedId, isFiltered);
 }
 
 function openEntry(id: string | null): void {
@@ -132,6 +140,11 @@ elements.list.addEventListener('click', (event: MouseEvent): void => {
 elements.filter.addEventListener('change', (): void => {
   const value = elements.filter.value;
   moodFilter = isMood(value) ? value : 'all';
+  refreshList();
+});
+
+elements.search.addEventListener('input', (): void => {
+  searchQuery = elements.search.value;
   refreshList();
 });
 
