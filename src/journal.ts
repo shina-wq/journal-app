@@ -1,9 +1,10 @@
-import { loadEntries, saveEntries } from './storage.js';
-import { isMood, type Journal, type JournalEntry, type Mood } from './types.js';
+import { loadEntries, loadTheme, saveEntries, saveTheme } from './storage.js';
+import { isMood, type Journal, type JournalEntry, type Mood, type Theme } from './types.js';
 import {
+  applyTheme,
   elements,
   fillForm,
-  markSaved,
+  markRead,
   readForm,
   renderEntries,
   renderMoodOptions,
@@ -83,13 +84,26 @@ export function filterByMood(mood: MoodFilter): Journal {
   return mood === 'all' ? entries : entries.filter((entry) => entry.mood === mood);
 }
 
+export function searchEntries(list: Journal, query: string): Journal {
+  const term = query.trim().toLowerCase();
+  if (!term) return list;
+  return list.filter((entry) => `${entry.title}\n${entry.content}`.toLowerCase().includes(term));
+}
+
+export function otherTheme(theme: Theme): Theme {
+  return theme === 'dark' ? 'light' : 'dark';
+}
+
 // Event handlers
 
 let selectedId: string | null = null;
 let moodFilter: MoodFilter = 'all';
+let searchQuery = '';
+let theme: Theme = loadTheme();
 
 function refreshList(): void {
-  renderEntries(filterByMood(moodFilter), selectedId);
+  const isFiltered = moodFilter !== 'all' || searchQuery.trim() !== '';
+  renderEntries(searchEntries(filterByMood(moodFilter), searchQuery), selectedId, isFiltered);
 }
 
 function openEntry(id: string | null): void {
@@ -172,5 +186,17 @@ elements.filter.addEventListener('change', (): void => {
   refreshList();
 });
 
+elements.search.addEventListener('input', (): void => {
+  searchQuery = elements.search.value;
+  refreshList();
+});
+
+elements.themeButton.addEventListener('click', (): void => {
+  theme = otherTheme(theme);
+  saveTheme(theme);
+  applyTheme(theme, otherTheme(theme));
+});
+
+applyTheme(theme, otherTheme(theme));
 renderMoodOptions();
 openEntry(entries[0]?.id ?? null);

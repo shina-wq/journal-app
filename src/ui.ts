@@ -1,5 +1,5 @@
 import type { EntryInput } from './journal.js';
-import { isMood, Mood, type JournalEntry } from './types.js';
+import { isMood, Mood, type JournalEntry, type Theme } from './types.js';
 
 export type View = 'list' | 'page';
 
@@ -12,7 +12,9 @@ function getElement<T extends HTMLElement>(selector: string): T {
 export const elements = {
   app: getElement<HTMLDivElement>('.app'),
   newButton: getElement<HTMLButtonElement>('#new-entry'),
+  themeButton: getElement<HTMLButtonElement>('#theme-toggle'),
   filter: getElement<HTMLSelectElement>('#mood-filter'),
+  search: getElement<HTMLInputElement>('#search'),
   list: getElement<HTMLUListElement>('#entry-list'),
   form: getElement<HTMLFormElement>('#entry-form'),
   backButton: getElement<HTMLButtonElement>('#back'),
@@ -66,9 +68,10 @@ export function renderMoodOptions(): void {
   );
 }
 
-export function renderEntries(entries: JournalEntry[], selectedId: string | null): void {
+export function renderEntries(entries: JournalEntry[], selectedId: string | null, isFiltered: boolean): void {
   if (entries.length === 0) {
-    elements.list.innerHTML = '<li class="empty">No entries here yet. Start one with the + button.</li>';
+    const message = isFiltered ? 'No matching entries.' : 'No entries here yet. Start one with the + button.';
+    elements.list.innerHTML = `<li class="empty">${message}</li>`;
     return;
   }
 
@@ -114,6 +117,11 @@ export function readForm(): EntryInput | null {
 export function markSaved(savedAt: number): void {
   elements.deleteButton.hidden = false;
   showStatus(`Saved · ${formatTime(savedAt)}`);
+}
+
+export function applyTheme(theme: Theme, next: Theme): void {
+  document.documentElement.dataset.theme = theme;
+  elements.themeButton.setAttribute('aria-label', `Switch to ${next} theme`);
 }
 
 export function setView(view: View): void {
