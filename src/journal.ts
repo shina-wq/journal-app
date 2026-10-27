@@ -1,5 +1,15 @@
-import { loadEntries, loadTheme, saveEntries, saveTheme } from './storage.js';
-import { isMood, type EntryInput, type Journal, type JournalEntry, type Mood, type Theme } from './types.js';
+import {
+  addEntry,
+  deleteEntry,
+  filterByMood,
+  getEntry,
+  latestEntryId,
+  searchEntries,
+  updateEntry,
+  type MoodFilter,
+} from './entries.js';
+import { loadTheme, saveTheme } from './storage.js';
+import { isMood, type Theme } from './types.js';
 import { pickPrompt } from './prompts.js';
 import {
   applyTheme,
@@ -15,21 +25,6 @@ import {
   setView,
   showStatus,
 } from './ui.js';
-
-type MoodFilter = Mood | 'all';
-
-let entries: Journal = loadEntries();
-
-function persist(next: Journal): void {
-  if (!saveEntries(next)) {
-    throw new Error("Couldn't save your journal. Your browser storage may be full.");
-  }
-  entries = next;
-}
-
-function findByProperty<T>(list: T[], key: keyof T, value: T[keyof T]): T | undefined {
-  return list.find((item) => item[key] === value);
-}
 
 // Delays fn until calls stop for `ms`; flush() runs a pending call right away.
 function debounce(fn: () => void, ms: number): (() => void) & { flush: () => void } {
@@ -50,43 +45,6 @@ function debounce(fn: () => void, ms: number): (() => void) & { flush: () => voi
   }
 
   return Object.assign(debounced, { flush });
-}
-
-function getEntry(id: string): JournalEntry | undefined {
-  return findByProperty(entries, 'id', id);
-}
-
-function addEntry(input: EntryInput): JournalEntry {
-  const entry: JournalEntry = { ...input, id: crypto.randomUUID(), timestamp: Date.now() };
-  persist([entry, ...entries]);
-  return entry;
-}
-
-function updateEntry(id: string, changes: Partial<EntryInput>): JournalEntry | undefined {
-  const entry = getEntry(id);
-  if (!entry) return undefined;
-
-  const updated: JournalEntry = { ...entry, ...changes };
-  persist(entries.map((item) => (item.id === id ? updated : item)));
-  return updated;
-}
-
-function deleteEntry(id: string): boolean {
-  const remaining = entries.filter((entry) => entry.id !== id);
-  if (remaining.length === entries.length) return false;
-
-  persist(remaining);
-  return true;
-}
-
-function filterByMood(mood: MoodFilter): Journal {
-  return mood === 'all' ? entries : entries.filter((entry) => entry.mood === mood);
-}
-
-function searchEntries(list: Journal, query: string): Journal {
-  const term = query.trim().toLowerCase();
-  if (!term) return list;
-  return list.filter((entry) => `${entry.title}\n${entry.content}`.toLowerCase().includes(term));
 }
 
 // Event handlers
@@ -151,7 +109,7 @@ function handleDelete(): void {
 
   try {
     deleteEntry(selectedId);
-    openEntry(entries[0]?.id ?? null);
+    openEntry(latestEntryId());
     setView('list');
   } catch (error) {
     showStatus(errorMessage(error), true);
@@ -215,4 +173,4 @@ elements.themeButton.addEventListener('click', (): void => {
 
 applyTheme(theme);
 renderMoodOptions();
-openEntry(entries[0]?.id ?? null);
+openEntry(latestEntryId());

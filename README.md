@@ -40,8 +40,9 @@ Then open the URL it prints. VS Code's Live Server extension works too.
 index.html        Entry point, loads dist/journal.js
 styles.css        Styles and responsive layout
 src/
+  journal.ts      Entry point: page state, autosave and event handlers
+  entries.ts      Business logic: add, edit, delete, search and filter entries
   types.ts        Mood enum, JournalEntry interface, Journal and EntryInput types
-  journal.ts      Business logic (add, edit, delete, search, filter, autosave) and event handlers
   storage.ts      Type-safe save/load with localStorage
   ui.ts           Typed DOM rendering and form handling
   prompts.ts      Mood-based writing prompts
