@@ -11,6 +11,10 @@
       href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,600&family=Rubik:wght@400;500&display=swap"
     />
     <link rel="stylesheet" href="styles.css" />
+    <!-- Applies a saved dark theme before first paint to avoid a light flash; journal.ts takes over after -->
+    <script>
+      if (localStorage.getItem('journal.theme') === 'dark') document.documentElement.dataset.theme = 'dark';
+    </script>
     <script type="module" src="dist/journal.js"></script>
   </head>
   <body>
@@ -21,6 +25,15 @@
             <path d="M12 5v14M5 12h14" />
           </svg>
         </button>
+        <button type="button" id="theme-toggle" class="icon-btn" aria-label="Switch theme">
+          <svg class="theme-icon" data-icon="light" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="4" />
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+          </svg>
+          <svg class="theme-icon" data-icon="dark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+          </svg>
+        </button>
       </header>
 
       <aside class="sidebar" aria-label="Entries">
@@ -29,6 +42,10 @@
           <select id="mood-filter">
             <option value="all">All entries</option>
           </select>
+        </label>
+        <label class="search">
+          <span class="sr-only">Search entries</span>
+          <input type="search" id="search" placeholder="Search entries" autocomplete="off" />
         </label>
         <ul id="entry-list" class="entry-list"></ul>
       </aside>
@@ -67,7 +84,6 @@
               New prompt
             </button>
             <p id="status" class="status" role="status"></p>
-            <button type="submit" class="save-btn">Save entry</button>
           </div>
         </form>
       </main>

@@ -1,6 +1,7 @@
-import { isMood, type Journal, type JournalEntry } from './types.js';
+import { isMood, isTheme, type Journal, type JournalEntry, type Theme } from './types.js';
 
-const STORAGE_KEY = 'journal.entries';
+const ENTRIES_KEY = 'journal.entries';
+const THEME_KEY = 'journal.theme';
 
 export function isJournalEntry(value: unknown): value is JournalEntry {
   if (typeof value !== 'object' || value === null) return false;
@@ -15,7 +16,7 @@ export function isJournalEntry(value: unknown): value is JournalEntry {
 }
 
 export function loadEntries(): Journal {
-  const raw = localStorage.getItem(STORAGE_KEY);
+  const raw = localStorage.getItem(ENTRIES_KEY);
   if (raw === null) return [];
 
   try {
@@ -28,9 +29,22 @@ export function loadEntries(): Journal {
 
 export function saveEntries(entries: Journal): boolean {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+    localStorage.setItem(ENTRIES_KEY, JSON.stringify(entries));
     return true;
   } catch {
     return false;
+  }
+}
+
+export function loadTheme(): Theme {
+  const value = localStorage.getItem(THEME_KEY);
+  return isTheme(value) ? value : 'light';
+}
+
+export function saveTheme(theme: Theme): void {
+  try {
+    localStorage.setItem(THEME_KEY, theme);
+  } catch {
+    // The theme still applies for this visit; it just won't be remembered.
   }
 }

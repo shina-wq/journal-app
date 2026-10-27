@@ -1,10 +1,12 @@
-import { loadEntries, saveEntries } from './storage.js';
-import { isMood, type Journal, type JournalEntry, type Mood } from './types.js';
+import { loadEntries, loadTheme, saveEntries, saveTheme } from './storage.js';
+import { isMood, type Journal, type JournalEntry, type Mood, type Theme } from './types.js';
 import { pickPrompt } from './prompts.js';
 import {
+  applyTheme,
   elements,
   fillForm,
   getSelectedMood,
+  markSaved,
   readForm,
   renderEntries,
   renderMoodOptions,
@@ -28,6 +30,30 @@ function persist(next: Journal): void {
 
 export function findByProperty<T>(list: T[], key: keyof T, value: T[keyof T]): T | undefined {
   return list.find((item) => item[key] === value);
+}
+
+export type Debounced<T extends unknown[]> = ((...args: T) => void) & { flush: () => void };
+
+// Delays fn until calls stop for `ms`; flush() runs a pending call right away.
+export function debounce<T extends unknown[]>(fn: (...args: T) => void, ms: number): Debounced<T> {
+  let timer: number | undefined;
+  let pendingArgs: T | null = null;
+
+  function flush(): void {
+    clearTimeout(timer);
+    if (pendingArgs === null) return;
+    const args = pendingArgs;
+    pendingArgs = null;
+    fn(...args);
+  }
+
+  function debounced(...args: T): void {
+    pendingArgs = args;
+    clearTimeout(timer);
+    timer = window.setTimeout(flush, ms);
+  }
+
+  return Object.assign(debounced, { flush });
 }
 
 export function getEntry(id: string): JournalEntry | undefined {
@@ -61,13 +87,26 @@ export function filterByMood(mood: MoodFilter): Journal {
   return mood === 'all' ? entries : entries.filter((entry) => entry.mood === mood);
 }
 
+export function searchEntries(list: Journal, query: string): Journal {
+  const term = query.trim().toLowerCase();
+  if (!term) return list;
+  return list.filter((entry) => `${entry.title}\n${entry.content}`.toLowerCase().includes(term));
+}
+
+export function otherTheme(theme: Theme): Theme {
+  return theme === 'dark' ? 'light' : 'dark';
+}
+
 // Event handlers
 
 let selectedId: string | null = null;
 let moodFilter: MoodFilter = 'all';
+let searchQuery = '';
+let theme: Theme = loadTheme();
 
 function refreshList(): void {
-  renderEntries(filterByMood(moodFilter), selectedId);
+  const isFiltered = moodFilter !== 'all' || searchQuery.trim() !== '';
+  renderEntries(searchEntries(filterByMood(moodFilter), searchQuery), selectedId, isFiltered);
 }
 
 // Shows a fresh prompt for the selected mood (or a general one) as the content placeholder.
@@ -76,6 +115,7 @@ function refreshPrompt(): void {
 }
 
 function openEntry(id: string | null): void {
+  autosave.flush();
   const entry = id === null ? undefined : getEntry(id);
   selectedId = entry?.id ?? null;
   if (entry) fillForm(entry);
@@ -88,18 +128,30 @@ function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : 'Something went wrong. Try again.';
 }
 
-function handleSave(event: SubmitEvent): void {
-  event.preventDefault();
+// Saves the open entry once it has a title and mood; a new entry is created on its first save.
+function saveCurrent(): void {
   const input = readForm();
-  if (!input) return;
+  if (!input) {
+    showStatus('Add a title and mood to save');
+    return;
+  }
 
   try {
     const entry = selectedId ? updateEntry(selectedId, input) : addEntry(input);
-    openEntry(entry?.id ?? null);
-    showStatus('Entry saved');
+    selectedId = entry?.id ?? null;
+    refreshList();
+    markSaved(Date.now());
   } catch (error) {
     showStatus(errorMessage(error), true);
   }
+}
+
+const autosave = debounce(saveCurrent, 800);
+
+function handleSave(event: SubmitEvent): void {
+  event.preventDefault();
+  autosave();
+  autosave.flush();
 }
 
 function handleDelete(): void {
@@ -115,14 +167,20 @@ function handleDelete(): void {
 }
 
 elements.form.addEventListener('submit', handleSave);
+elements.form.addEventListener('input', (): void => autosave());
+window.addEventListener('pagehide', (): void => autosave.flush());
 elements.moods.addEventListener('change', refreshPrompt);
 
 elements.shuffleButton.addEventListener('click', (): void => {
   refreshPrompt();
   elements.content.focus();
 });
+
 elements.deleteButton.addEventListener('click', handleDelete);
-elements.backButton.addEventListener('click', (): void => setView('list'));
+elements.backButton.addEventListener('click', (): void => {
+  autosave.flush();
+  setView('list');
+});
 
 elements.newButton.addEventListener('click', (): void => {
   openEntry(null);
@@ -144,5 +202,17 @@ elements.filter.addEventListener('change', (): void => {
   refreshList();
 });
 
+elements.search.addEventListener('input', (): void => {
+  searchQuery = elements.search.value;
+  refreshList();
+});
+
+elements.themeButton.addEventListener('click', (): void => {
+  theme = otherTheme(theme);
+  saveTheme(theme);
+  applyTheme(theme, otherTheme(theme));
+});
+
+applyTheme(theme, otherTheme(theme));
 renderMoodOptions();
 openEntry(entries[0]?.id ?? null);
