@@ -13,6 +13,7 @@ export const elements = {
   app: getElement<HTMLDivElement>('.app'),
   newButton: getElement<HTMLButtonElement>('#new-entry'),
   filter: getElement<HTMLSelectElement>('#mood-filter'),
+  search: getElement<HTMLInputElement>('#search'),
   list: getElement<HTMLUListElement>('#entry-list'),
   form: getElement<HTMLFormElement>('#entry-form'),
   backButton: getElement<HTMLButtonElement>('#back'),
@@ -64,9 +65,10 @@ export function renderMoodOptions(): void {
   );
 }
 
-export function renderEntries(entries: JournalEntry[], selectedId: string | null): void {
+export function renderEntries(entries: JournalEntry[], selectedId: string | null, isFiltered: boolean): void {
   if (entries.length === 0) {
-    elements.list.innerHTML = '<li class="empty">No entries here yet. Start one with the + button.</li>';
+    const message = isFiltered ? 'No matching entries.' : 'No entries here yet. Start one with the + button.';
+    elements.list.innerHTML = `<li class="empty">${message}</li>`;
     return;
   }
 
