@@ -23,6 +23,7 @@ export const elements = {
   moods: getElement<HTMLFieldSetElement>('#moods'),
   title: getElement<HTMLInputElement>('#title'),
   content: getElement<HTMLTextAreaElement>('#content'),
+  shuffleButton: getElement<HTMLButtonElement>('#shuffle-prompt'),
   status: getElement<HTMLParagraphElement>('#status'),
 };
 
@@ -122,6 +123,15 @@ export function markSaved(savedAt: number): void {
 export function applyTheme(theme: Theme, next: Theme): void {
   document.documentElement.dataset.theme = theme;
   elements.themeButton.setAttribute('aria-label', `Switch to ${next} theme`);
+}
+
+export function getSelectedMood(): Mood | null {
+  const mood = new FormData(elements.form).get('mood');
+  return isMood(mood) ? mood : null;
+}
+
+export function setPrompt(prompt: string): void {
+  elements.content.placeholder = prompt;
 }
 
 export function setView(view: View): void {

@@ -1,14 +1,17 @@
 import { loadEntries, loadTheme, saveEntries, saveTheme } from './storage.js';
 import { isMood, type Journal, type JournalEntry, type Mood, type Theme } from './types.js';
+import { pickPrompt } from './prompts.js';
 import {
   applyTheme,
   elements,
   fillForm,
+  getSelectedMood,
   markSaved,
   readForm,
   renderEntries,
   renderMoodOptions,
   resetForm,
+  setPrompt,
   setView,
   showStatus,
 } from './ui.js';
@@ -106,12 +109,18 @@ function refreshList(): void {
   renderEntries(searchEntries(filterByMood(moodFilter), searchQuery), selectedId, isFiltered);
 }
 
+// Shows a fresh prompt for the selected mood (or a general one) as the content placeholder.
+function refreshPrompt(): void {
+  setPrompt(pickPrompt(getSelectedMood(), elements.content.placeholder));
+}
+
 function openEntry(id: string | null): void {
   autosave.flush();
   const entry = id === null ? undefined : getEntry(id);
   selectedId = entry?.id ?? null;
   if (entry) fillForm(entry);
   else resetForm();
+  refreshPrompt();
   refreshList();
 }
 
@@ -160,6 +169,13 @@ function handleDelete(): void {
 elements.form.addEventListener('submit', handleSave);
 elements.form.addEventListener('input', (): void => autosave());
 window.addEventListener('pagehide', (): void => autosave.flush());
+elements.moods.addEventListener('change', refreshPrompt);
+
+elements.shuffleButton.addEventListener('click', (): void => {
+  refreshPrompt();
+  elements.content.focus();
+});
+
 elements.deleteButton.addEventListener('click', handleDelete);
 elements.backButton.addEventListener('click', (): void => {
   autosave.flush();
