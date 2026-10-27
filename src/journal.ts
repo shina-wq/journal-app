@@ -1,6 +1,16 @@
-import { loadEntries, saveEntries } from './storage.js';
-import { isMood, type Journal, type JournalEntry, type Mood } from './types.js';
-import { elements, fillForm, readForm, renderEntries, renderMoodOptions, resetForm, setView, showStatus } from './ui.js';
+import { loadEntries, loadTheme, saveEntries, saveTheme } from './storage.js';
+import { isMood, type Journal, type JournalEntry, type Mood, type Theme } from './types.js';
+import {
+  applyTheme,
+  elements,
+  fillForm,
+  readForm,
+  renderEntries,
+  renderMoodOptions,
+  resetForm,
+  setView,
+  showStatus,
+} from './ui.js';
 
 export type EntryInput = Omit<JournalEntry, 'id' | 'timestamp'>;
 export type MoodFilter = Mood | 'all';
@@ -55,11 +65,16 @@ export function searchEntries(list: Journal, query: string): Journal {
   return list.filter((entry) => `${entry.title}\n${entry.content}`.toLowerCase().includes(term));
 }
 
+export function otherTheme(theme: Theme): Theme {
+  return theme === 'dark' ? 'light' : 'dark';
+}
+
 // Event handlers
 
 let selectedId: string | null = null;
 let moodFilter: MoodFilter = 'all';
 let searchQuery = '';
+let theme: Theme = loadTheme();
 
 function refreshList(): void {
   const isFiltered = moodFilter !== 'all' || searchQuery.trim() !== '';
@@ -133,5 +148,12 @@ elements.search.addEventListener('input', (): void => {
   refreshList();
 });
 
+elements.themeButton.addEventListener('click', (): void => {
+  theme = otherTheme(theme);
+  saveTheme(theme);
+  applyTheme(theme, otherTheme(theme));
+});
+
+applyTheme(theme, otherTheme(theme));
 renderMoodOptions();
 openEntry(entries[0]?.id ?? null);
