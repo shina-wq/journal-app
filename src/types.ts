@@ -16,7 +16,10 @@ export interface JournalEntry {
 
 export type Journal = JournalEntry[];
 
-export const themes = ['light', 'dark'] as const;
+// What the form provides; id and timestamp are added when the entry is created
+export type EntryInput = Omit<JournalEntry, 'id' | 'timestamp'>;
+
+const themes = ['light', 'dark'] as const;
 export type Theme = (typeof themes)[number];
 
 const moods: unknown[] = Object.values(Mood);

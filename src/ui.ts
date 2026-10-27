@@ -1,7 +1,6 @@
-import type { EntryInput } from './journal.js';
-import { isMood, Mood, type JournalEntry, type Theme } from './types.js';
+import { isMood, Mood, type EntryInput, type JournalEntry, type Theme } from './types.js';
 
-export type View = 'list' | 'page';
+type View = 'list' | 'page';
 
 function getElement<T extends HTMLElement>(selector: string): T {
   const element = document.querySelector<T>(selector);
@@ -37,8 +36,9 @@ function startOfDay(timestamp: number): number {
   return new Date(timestamp).setHours(0, 0, 0, 0);
 }
 
+// Dates and times use the visitor's own locale (undefined), so they read naturally wherever they are.
 function formatLongDate(timestamp: number): string {
-  return new Date(timestamp).toLocaleDateString('en-GB', {
+  return new Date(timestamp).toLocaleDateString(undefined, {
     weekday: 'short',
     day: 'numeric',
     month: 'short',
@@ -47,7 +47,7 @@ function formatLongDate(timestamp: number): string {
 }
 
 function formatShortDay(timestamp: number): string {
-  return new Date(timestamp).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric' });
+  return new Date(timestamp).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
 function groupLabel(timestamp: number): string {
@@ -55,7 +55,7 @@ function groupLabel(timestamp: number): string {
   if (daysAgo <= 0) return 'Today';
   if (daysAgo === 1) return 'Yesterday';
   if (daysAgo < 7) return 'This week';
-  return new Date(timestamp).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+  return new Date(timestamp).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
 }
 
 function previewText(content: string): string {
@@ -63,7 +63,7 @@ function previewText(content: string): string {
 }
 
 function formatTime(timestamp: number): string {
-  return new Date(timestamp).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  return new Date(timestamp).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
 }
 
 function moodLabel(mood: Mood): string {
@@ -106,7 +106,7 @@ export function renderMoodOptions(): void {
 
 export function renderEntries(entries: JournalEntry[], selectedId: string | null, isFiltered: boolean): void {
   if (entries.length === 0) {
-    const message = isFiltered ? 'No matching entries.' : 'No entries here yet. Start one with the + button.';
+    const message = isFiltered ? 'No matching entries.' : 'No entries yet.';
     elements.list.innerHTML = `<li class="empty">${message}</li>`;
     return;
   }
@@ -172,8 +172,8 @@ export function resetForm(): void {
 export function readForm(): EntryInput | null {
   // Pasted line breaks would survive in a textarea; titles stay single-line.
   const title = elements.title.value.replace(/\s+/g, ' ').trim();
-  const mood = new FormData(elements.form).get('mood');
-  if (!title || !isMood(mood)) return null;
+  const mood = getSelectedMood();
+  if (!title || !mood) return null;
   return { title, content: elements.content.value, mood };
 }
 
@@ -182,9 +182,9 @@ export function markSaved(savedAt: number): void {
   showStatus(`Saved · ${formatTime(savedAt)}`);
 }
 
-export function applyTheme(theme: Theme, next: Theme): void {
+export function applyTheme(theme: Theme): void {
   document.documentElement.dataset.theme = theme;
-  elements.themeButton.setAttribute('aria-label', `Switch to ${next} theme`);
+  elements.themeButton.setAttribute('aria-label', `Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`);
 }
 
 export function getSelectedMood(): Mood | null {

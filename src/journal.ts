@@ -1,5 +1,5 @@
 import { loadEntries, loadTheme, saveEntries, saveTheme } from './storage.js';
-import { isMood, type Journal, type JournalEntry, type Mood, type Theme } from './types.js';
+import { isMood, type EntryInput, type Journal, type JournalEntry, type Mood, type Theme } from './types.js';
 import { pickPrompt } from './prompts.js';
 import {
   applyTheme,
@@ -16,8 +16,7 @@ import {
   showStatus,
 } from './ui.js';
 
-export type EntryInput = Omit<JournalEntry, 'id' | 'timestamp'>;
-export type MoodFilter = Mood | 'all';
+type MoodFilter = Mood | 'all';
 
 let entries: Journal = loadEntries();
 
@@ -28,27 +27,24 @@ function persist(next: Journal): void {
   entries = next;
 }
 
-export function findByProperty<T>(list: T[], key: keyof T, value: T[keyof T]): T | undefined {
+function findByProperty<T>(list: T[], key: keyof T, value: T[keyof T]): T | undefined {
   return list.find((item) => item[key] === value);
 }
 
-export type Debounced<T extends unknown[]> = ((...args: T) => void) & { flush: () => void };
-
 // Delays fn until calls stop for `ms`; flush() runs a pending call right away.
-export function debounce<T extends unknown[]>(fn: (...args: T) => void, ms: number): Debounced<T> {
+function debounce(fn: () => void, ms: number): (() => void) & { flush: () => void } {
   let timer: number | undefined;
-  let pendingArgs: T | null = null;
+  let pending = false;
 
   function flush(): void {
     clearTimeout(timer);
-    if (pendingArgs === null) return;
-    const args = pendingArgs;
-    pendingArgs = null;
-    fn(...args);
+    if (!pending) return;
+    pending = false;
+    fn();
   }
 
-  function debounced(...args: T): void {
-    pendingArgs = args;
+  function debounced(): void {
+    pending = true;
     clearTimeout(timer);
     timer = window.setTimeout(flush, ms);
   }
@@ -56,26 +52,26 @@ export function debounce<T extends unknown[]>(fn: (...args: T) => void, ms: numb
   return Object.assign(debounced, { flush });
 }
 
-export function getEntry(id: string): JournalEntry | undefined {
+function getEntry(id: string): JournalEntry | undefined {
   return findByProperty(entries, 'id', id);
 }
 
-export function addEntry(input: EntryInput): JournalEntry {
+function addEntry(input: EntryInput): JournalEntry {
   const entry: JournalEntry = { ...input, id: crypto.randomUUID(), timestamp: Date.now() };
   persist([entry, ...entries]);
   return entry;
 }
 
-export function updateEntry(id: string, changes: Partial<EntryInput>): JournalEntry | undefined {
+function updateEntry(id: string, changes: Partial<EntryInput>): JournalEntry | undefined {
   const entry = getEntry(id);
   if (!entry) return undefined;
 
-  const updated: JournalEntry = { ...entry, ...changes, id: entry.id, timestamp: entry.timestamp };
+  const updated: JournalEntry = { ...entry, ...changes };
   persist(entries.map((item) => (item.id === id ? updated : item)));
   return updated;
 }
 
-export function deleteEntry(id: string): boolean {
+function deleteEntry(id: string): boolean {
   const remaining = entries.filter((entry) => entry.id !== id);
   if (remaining.length === entries.length) return false;
 
@@ -83,18 +79,14 @@ export function deleteEntry(id: string): boolean {
   return true;
 }
 
-export function filterByMood(mood: MoodFilter): Journal {
+function filterByMood(mood: MoodFilter): Journal {
   return mood === 'all' ? entries : entries.filter((entry) => entry.mood === mood);
 }
 
-export function searchEntries(list: Journal, query: string): Journal {
+function searchEntries(list: Journal, query: string): Journal {
   const term = query.trim().toLowerCase();
   if (!term) return list;
   return list.filter((entry) => `${entry.title}\n${entry.content}`.toLowerCase().includes(term));
-}
-
-export function otherTheme(theme: Theme): Theme {
-  return theme === 'dark' ? 'light' : 'dark';
 }
 
 // Event handlers
@@ -216,11 +208,11 @@ elements.search.addEventListener('input', (): void => {
 });
 
 elements.themeButton.addEventListener('click', (): void => {
-  theme = otherTheme(theme);
+  theme = theme === 'dark' ? 'light' : 'dark';
   saveTheme(theme);
-  applyTheme(theme, otherTheme(theme));
+  applyTheme(theme);
 });
 
-applyTheme(theme, otherTheme(theme));
+applyTheme(theme);
 renderMoodOptions();
 openEntry(entries[0]?.id ?? null);

@@ -3,7 +3,7 @@ import { isMood, isTheme, type Journal, type JournalEntry, type Theme } from './
 const ENTRIES_KEY = 'journal.entries';
 const THEME_KEY = 'journal.theme';
 
-export function isJournalEntry(value: unknown): value is JournalEntry {
+function isJournalEntry(value: unknown): value is JournalEntry {
   if (typeof value !== 'object' || value === null) return false;
   const entry = value as Record<string, unknown>;
   return (
