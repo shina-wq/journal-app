@@ -171,6 +171,13 @@ elements.form.addEventListener('input', (): void => autosave());
 window.addEventListener('pagehide', (): void => autosave.flush());
 elements.moods.addEventListener('change', refreshPrompt);
 
+// The title is a textarea so long titles wrap, but it stays one line: Enter moves on to the entry.
+elements.title.addEventListener('keydown', (event: KeyboardEvent): void => {
+  if (event.key !== 'Enter') return;
+  event.preventDefault();
+  elements.content.focus();
+});
+
 elements.shuffleButton.addEventListener('click', (): void => {
   refreshPrompt();
   elements.content.focus();
@@ -192,12 +199,13 @@ elements.list.addEventListener('click', (event: MouseEvent): void => {
   if (!(event.target instanceof Element)) return;
   const id = event.target.closest<HTMLElement>('[data-id]')?.dataset.id;
   if (!id) return;
-  openEntry(id);
+  // Show the page first so filling it can scroll the chosen mood into view
   setView('page');
+  openEntry(id);
 });
 
 elements.filter.addEventListener('change', (): void => {
-  const value = elements.filter.value;
+  const value = elements.filter.querySelector<HTMLInputElement>('input:checked')?.value;
   moodFilter = isMood(value) ? value : 'all';
   refreshList();
 });

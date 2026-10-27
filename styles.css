@@ -1,28 +1,27 @@
 /* Tokens: light-dark(light, dark) picks a value from color-scheme (set by data-theme) */
 :root {
   color-scheme: light;
-  --bg: light-dark(#e9e0d7, #1f1a16);
-  --selected: light-dark(#dfcbb4, #3a2f26);
-  --page: light-dark(#fbf9f6, #2a231e);
-  --text: light-dark(#2e2418, #efe6dc);
-  --text-hover: light-dark(#4a3b2a, #d8cdc1);
-  --muted: light-dark(#5f564c, #b3a697);
-  --danger: light-dark(#9b3b33, #e8857b);
-  --focus: light-dark(#7a5a3a, #d9b48f);
-  --shadow: light-dark(rgb(46 36 24 / 6%), rgb(0 0 0 / 30%));
-  --on-mood: #2e2418;
-  --font-serif: 'Newsreader', Georgia, serif;
-  --font-sans: 'Rubik', system-ui, sans-serif;
-  --radius: 12px;
+  --bg: light-dark(#f7f7f5, #191919);
+  --page: light-dark(#ffffff, #202020);
+  --text: light-dark(#1a1a1a, #ececec);
+  --muted: light-dark(#6b6b6b, #9a9a9a);
+  --line: light-dark(#e7e7e4, #2f2f2f);
+  --hover: light-dark(rgb(0 0 0 / 4%), rgb(255 255 255 / 5%));
+  --selected: light-dark(rgb(0 0 0 / 7%), rgb(255 255 255 / 9%));
+  --danger: light-dark(#c4362b, #f07167);
+  --focus: light-dark(#1a1a1a, #ececec);
+  --font: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --radius: 8px;
 }
 
 :root[data-theme='dark'] { color-scheme: dark; }
 
-[data-mood='happy'] { --mood: #f3cf7a; }
-[data-mood='sad'] { --mood: #a9c4e2; }
-[data-mood='motivated'] { --mood: #f2ae8f; }
-[data-mood='stressed'] { --mood: #e8a3a0; }
-[data-mood='calm'] { --mood: #b2cfae; }
+/* Colour only appears where it means something: the moods */
+[data-mood='happy'] { --mood: #e6b422; }
+[data-mood='sad'] { --mood: #5b8fd9; }
+[data-mood='motivated'] { --mood: #e8793a; }
+[data-mood='stressed'] { --mood: #a46bd6; }
+[data-mood='calm'] { --mood: #4fa36b; }
 
 /* Base */
 *,
@@ -35,14 +34,15 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font: 400 1rem/1.6 var(--font-sans);
+  font: 400 0.9375rem/1.5 var(--font);
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Scrolling still works (wheel, touch, keyboard); only the bar is hidden */
 html,
 .sidebar,
 .page {
-  scrollbar-width: none;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
 }
 
 button,
@@ -75,6 +75,20 @@ button {
   white-space: nowrap;
 }
 
+@media (prefers-reduced-motion: no-preference) {
+  .icon-btn,
+  .filter-chip,
+  .prompt-btn,
+  .entry-item,
+  .mood-pill,
+  .search input {
+    transition:
+      background-color 120ms ease,
+      border-color 120ms ease,
+      color 120ms ease;
+  }
+}
+
 /* Layout: mobile shows one view at a time */
 .app {
   display: flex;
@@ -82,16 +96,9 @@ button {
   min-height: 100dvh;
 }
 
-.toolbar {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  padding: 16px 16px 0;
-}
-
 .sidebar {
   flex: 1;
-  padding: 8px 8px 24px;
+  padding: 12px 12px 24px;
 }
 
 .page {
@@ -103,7 +110,6 @@ button {
 
 @media (max-width: 767.98px) {
   .app[data-view='list'] .page,
-  .app[data-view='page'] .toolbar,
   .app[data-view='page'] .sidebar {
     display: none;
   }
@@ -112,32 +118,18 @@ button {
 @media (min-width: 768px) {
   .app {
     display: grid;
-    grid-template-columns: clamp(220px, 28vw, 300px) minmax(0, 1fr);
-    grid-template-rows: auto minmax(0, 1fr);
-    grid-template-areas:
-      'toolbar toolbar'
-      'sidebar page';
-    column-gap: clamp(24px, 4vw, 64px);
+    grid-template-columns: 288px minmax(0, 1fr);
     height: 100dvh;
-    padding: 24px clamp(16px, 3vw, 40px) 0;
-  }
-
-  .toolbar {
-    grid-area: toolbar;
-    padding: 0 0 24px;
   }
 
   .sidebar {
-    grid-area: sidebar;
-    padding: 32px 0 24px;
+    padding: 16px 12px 24px;
     overflow-y: auto;
+    border-right: 1px solid var(--line);
   }
 
   .page {
-    grid-area: page;
     overflow-y: auto;
-    border-radius: 32px 32px 0 0;
-    box-shadow: 0 -2px 24px var(--shadow);
   }
 
   .icon-btn.back-btn {
@@ -149,21 +141,23 @@ button {
 .icon-btn {
   display: grid;
   place-items: center;
-  width: 44px;
-  height: 44px;
+  width: 36px;
+  height: 36px;
   padding: 0;
   border: 0;
-  border-radius: 50%;
-  background: var(--selected);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
 }
 
 .icon-btn:hover {
-  background: color-mix(in srgb, var(--selected), var(--text) 12%);
+  background: var(--hover);
+  color: var(--text);
 }
 
 .icon-btn svg {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
 }
 
 .theme-icon {
@@ -176,68 +170,42 @@ button {
   display: block;
 }
 
-.icon-btn.subtle {
-  background: transparent;
-}
-
-.icon-btn.subtle:hover {
-  background: var(--bg);
-}
-
 /* Sidebar */
-.filter {
-  position: relative;
-  display: inline-block;
+.sidebar-head {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding-left: 8px;
 }
 
-/* Chevron as a mask so it takes the text color in both themes */
-.filter::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  right: 6px;
-  width: 16px;
-  height: 16px;
-  translate: 0 -50%;
-  background: currentColor;
-  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")
-    center / contain no-repeat;
-  pointer-events: none;
-}
-
-.filter select {
-  appearance: none;
-  padding: 4px 28px 4px 8px;
-  border: 0;
-  border-radius: 8px;
-  background: transparent;
-  font: 600 1.5rem/1.2 var(--font-serif);
-  cursor: pointer;
-  field-sizing: content;
+.app-title {
+  margin: 0 auto 0 0;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
 }
 
 .search {
   display: block;
-  margin-top: 16px;
+  margin-top: 12px;
 }
 
 .search input {
   width: 100%;
-  min-height: 44px;
-  padding: 0 16px 0 40px;
-  border: 0;
-  border-radius: 999px;
-  background-color: color-mix(in srgb, var(--page) 60%, transparent);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235f564c' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-4-4'/%3E%3C/svg%3E");
+  height: 36px;
+  padding: 0 12px 0 34px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background-color: var(--page);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b6b6b' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-4-4'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: 14px center;
-  background-size: 18px;
-  font-size: 0.9375rem;
+  background-position: 11px center;
+  background-size: 15px;
 }
 
 /* The icon is an image, so light-dark() can't recolor it; swap in a lighter stroke for dark mode */
 [data-theme='dark'] .search input {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23b3a697' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-4-4'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239a9a9a' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-4-4'/%3E%3C/svg%3E");
 }
 
 .search input::placeholder {
@@ -245,21 +213,103 @@ button {
 }
 
 .search input:focus-visible {
-  background-color: var(--page);
+  border-color: var(--muted);
+  outline: none;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-inline-size: 0;
+  margin: 10px 0 0;
+  padding: 0;
+  border: 0;
+}
+
+.filter-chip {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--muted);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+/* Mood chips are just the colour dot; the name is in the title and for screen readers */
+.filter-chip[data-mood] {
+  padding: 0;
+}
+
+.filter-chip[data-mood]::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--mood);
+}
+
+.filter-chip:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.filter-chip:has(:checked) {
+  border-color: transparent;
+  background: var(--selected);
+  color: var(--text);
+}
+
+.filter-chip:has(:focus-visible) {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.filter-chip input,
+.mood-pill input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.entry-list,
+.group-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 .entry-list {
-  margin: 16px 0 0;
-  padding: 0;
-  list-style: none;
+  margin-top: 16px;
+}
+
+.entry-group + .entry-group {
+  margin-top: 16px;
+}
+
+.group-label {
+  margin: 0 0 2px;
+  padding: 0 8px;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 500;
 }
 
 .entry-item {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   column-gap: 12px;
+  row-gap: 1px;
   width: 100%;
-  padding: 10px 8px;
+  padding: 8px;
   border: 0;
   border-radius: var(--radius);
   background: transparent;
@@ -267,42 +317,45 @@ button {
 }
 
 .entry-item:hover {
-  background: color-mix(in srgb, var(--selected) 50%, transparent);
+  background: var(--hover);
 }
 
 .entry-item[aria-current='true'] {
   background: var(--selected);
 }
 
-.entry-date {
-  color: var(--muted);
-  font-size: 0.75rem;
-  font-weight: 500;
-}
-
 .entry-title {
   overflow: hidden;
+  font-weight: 500;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.entry-item[aria-current='true'] .entry-title {
-  font-weight: 500;
+.entry-day {
+  align-self: baseline;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.entry-preview {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.8125rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .mood-dot {
-  grid-column: 2;
-  grid-row: 1 / span 2;
   align-self: center;
-  width: 10px;
-  height: 10px;
+  justify-self: end;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   background: var(--mood);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--text) 25%, transparent);
 }
 
 .empty {
-  padding: 10px 8px;
+  padding: 8px;
   color: var(--muted);
 }
 
@@ -312,55 +365,87 @@ button {
   flex-direction: column;
   flex: 1;
   gap: 16px;
-  padding: 16px 16px 0;
+  width: 100%;
+  max-width: 44rem;
+  margin-inline: auto;
+  padding: 12px 20px 0;
 }
 
 @media (min-width: 768px) {
   .entry-form {
-    padding: 48px clamp(24px, 5vw, 56px) 0;
+    padding: 40px 40px 0;
   }
 }
 
 .page-head {
   display: flex;
   align-items: center;
-  gap: 8px;
-  min-height: 44px;
+  gap: 4px;
+  min-height: 36px;
 }
 
 .page-head time {
   margin-right: auto;
   color: var(--muted);
   font-size: 0.8125rem;
-  font-weight: 500;
 }
 
 .moods {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
+  /* Fieldsets default to min-content width, which would stop the row scrolling on phones */
+  min-inline-size: 0;
   margin: 0;
   padding: 0;
   border: 0;
 }
 
+/* Phones scroll the moods sideways instead of leaving one pill on its own row */
+@media (max-width: 767.98px) {
+  .moods {
+    flex-wrap: nowrap;
+    margin-inline: -20px;
+    padding-inline: 20px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+}
+
 .mood-pill {
   position: relative;
   display: inline-flex;
+  flex: none;
   align-items: center;
-  min-height: 44px;
-  padding: 0 16px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--mood) 35%, transparent);
-  font-size: 0.875rem;
+  gap: 7px;
+  height: 32px;
+  padding: 0 11px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--muted);
+  font-size: 0.8125rem;
+  font-weight: 500;
   cursor: pointer;
 }
 
-.mood-pill:has(:checked) {
+.mood-pill::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
   background: var(--mood);
-  box-shadow: inset 0 0 0 1.5px rgb(46 36 24 / 35%);
-  color: var(--on-mood);
-  font-weight: 500;
+}
+
+.mood-pill:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
+/* Only the chosen mood takes a tint of its colour */
+.mood-pill:has(:checked) {
+  border-color: color-mix(in srgb, var(--mood) 45%, var(--page));
+  background: color-mix(in srgb, var(--mood) 12%, var(--page));
+  color: var(--text);
 }
 
 .mood-pill:has(:focus-visible) {
@@ -368,19 +453,13 @@ button {
   outline-offset: 2px;
 }
 
-.mood-pill input {
-  position: absolute;
-  inset: 0;
-  margin: 0;
-  opacity: 0;
-  cursor: pointer;
-}
-
 .title-input,
 .content-input {
   padding: 0;
   border: 0;
   background: transparent;
+  resize: none;
+  field-sizing: content;
 }
 
 .title-input:focus-visible,
@@ -394,7 +473,12 @@ button {
 }
 
 .title-input {
-  font: 600 clamp(2rem, 1.4rem + 2.5vw, 3.25rem) / 1.15 var(--font-serif);
+  overflow: hidden;
+  font-size: clamp(1.625rem, 1.3rem + 1.4vw, 2.125rem);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
 }
 
 .content-input {
@@ -402,11 +486,9 @@ button {
   min-height: 6lh;
   font-size: 1.0625rem;
   line-height: 1.7;
-  resize: none;
-  field-sizing: content;
 }
 
-/* Stays pinned to the bottom of the page so Save is always visible */
+/* Stays pinned to the bottom of the page so the save status is always visible */
 .form-footer {
   position: sticky;
   bottom: 0;
@@ -414,38 +496,32 @@ button {
   align-items: center;
   justify-content: flex-end;
   gap: 16px;
-  padding: 12px 0 24px;
+  padding: 12px 0 20px;
   background: var(--page);
-}
-
-@media (min-width: 768px) {
-  .form-footer {
-    padding-bottom: 32px;
-  }
 }
 
 .prompt-btn {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  min-height: 44px;
+  gap: 6px;
+  height: 32px;
   margin-right: auto;
-  padding: 0 14px;
+  padding: 0 10px;
   border: 0;
-  border-radius: 999px;
+  border-radius: 6px;
   background: transparent;
   color: var(--muted);
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
 }
 
 .prompt-btn:hover {
-  background: var(--bg);
+  background: var(--hover);
   color: var(--text);
 }
 
 .prompt-btn svg {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
 }
 
 /* The prompt is the placeholder, so the button only shows while the entry is empty */
@@ -456,7 +532,7 @@ button {
 .status {
   margin: 0;
   color: var(--muted);
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
 }
 
 .status.is-error {
