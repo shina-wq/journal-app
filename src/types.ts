@@ -19,8 +19,7 @@ export type Journal = JournalEntry[];
 // What the form provides; id and timestamp are added when the entry is created
 export type EntryInput = Omit<JournalEntry, 'id' | 'timestamp'>;
 
-const themes = ['light', 'dark'] as const;
-export type Theme = (typeof themes)[number];
+export type Theme = "light" | "dark"
 
 const moods: unknown[] = Object.values(Mood);
 
@@ -29,5 +28,5 @@ export function isMood(value: unknown): value is Mood {
 }
 
 export function isTheme(value: unknown): value is Theme {
-  return (themes as readonly unknown[]).includes(value);
+  return value === "light" || value === "dark"
 }
