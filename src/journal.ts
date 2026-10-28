@@ -76,7 +76,7 @@ function searchEntries(list: Journal, query: string): Journal {
 }
 
 // Delays fn until calls stop for `ms`; flush() runs a pending call right away.
-function debounce(fn: () => void, ms: number): (() => void) & { flush: () => void } {
+function debounce(fn: () => void, ms: number): { run: () => void; flush: () => void } {
   let timer: number | undefined;
   let pending = false;
 
@@ -93,7 +93,7 @@ function debounce(fn: () => void, ms: number): (() => void) & { flush: () => voi
     timer = window.setTimeout(flush, ms);
   }
 
-  return Object.assign(debounced, { flush });
+  return { run: debounced, flush };
 }
 
 // Event handlers
@@ -149,7 +149,7 @@ const autosave = debounce(saveCurrent, 800);
 
 function handleSave(event: SubmitEvent): void {
   event.preventDefault();
-  autosave();
+  autosave.run();
   autosave.flush();
 }
 
@@ -166,7 +166,7 @@ function handleDelete(): void {
 }
 
 elements.form.addEventListener('submit', handleSave);
-elements.form.addEventListener('input', (): void => autosave());
+elements.form.addEventListener('input', (): void => autosave.run());
 window.addEventListener('pagehide', (): void => autosave.flush());
 elements.moods.addEventListener('change', refreshPrompt);
 
