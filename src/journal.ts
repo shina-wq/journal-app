@@ -75,7 +75,6 @@ function searchEntries(list: Journal, query: string): Journal {
   return list.filter((entry) => `${entry.title}\n${entry.content}`.toLowerCase().includes(term));
 }
 
-// Delays fn until calls stop for `ms`; flush() runs a pending call right away.
 function debounce(fn: () => void, ms: number): { run: () => void; flush: () => void } {
   let timer: number | undefined;
   let pending = false;
