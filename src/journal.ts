@@ -29,6 +29,7 @@ function persist(next: Journal): void {
   entries = next;
 }
 
+// reusable search function for finding an item in a list by a property value
 function findByProperty<T>(list: T[], key: keyof T, value: T[keyof T]): T | undefined {
   return list.find((item) => item[key] === value);
 }
@@ -208,10 +209,12 @@ elements.filter.addEventListener('change', (): void => {
   refreshList();
 });
 
-elements.search.addEventListener('input', (): void => {
+const debouncedSearch = debounce((): void => {
   searchQuery = elements.search.value;
   refreshList();
-});
+}, 300);
+
+elements.search.addEventListener('input', debouncedSearch.run);
 
 elements.themeButton.addEventListener('click', (): void => {
   theme = theme === 'dark' ? 'light' : 'dark';
